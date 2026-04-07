@@ -9,11 +9,11 @@
 #define S2 3 //PB3
 #define S3 2 //PB2
 
-unsigned short tick_msec;
 
 unsigned short tim4_divider = 0;
 unsigned int tim4_divider2 = 0;
 unsigned int tim4_divider3 = 0;
+unsigned char led_status = 0;
 
 void main()
 {   
@@ -32,9 +32,6 @@ void main()
 	PC_CR1 |= 1<<D3;
 	PC_CR2 &= ~(1<<D3);
 	
-
-	
-	
 	// S1
 	PB_DDR &= ~(1<<S1);
 	PB_CR1 &= ~(1<<S1);
@@ -52,12 +49,32 @@ void main()
     TIM4_CR1 |= 1 << 0;
     
     __asm__ ("rim");
-while (1);
+while (1)
+{
+if ((PB_IDR & (1<<S1)) == 0) 
+    {
+            for(volatile long d=0; d<10000; d++); // delay
+            if ((PB_IDR & (1<<S1)) == 0) {
+                led_status=1;
+            }
+    }
+if ((PB_IDR & (1<<S2)) == 0) 
+    {
+            for(volatile long d=0; d<10000; d++); // delay
+            if ((PB_IDR & (1<<S2)) == 0) {
+                led_status=0;
+                 PC_ODR |= (1<<D1) | (1<<D2) | (1<<D3);
+            }
+    }
 }
-
-void foo(void) __interrupt(23){
-TIM4_SR &= ~(1 << 0);
-
+}
+void foo(void) __interrupt(23)
+{
+    TIM4_SR &= ~(1 << 0);
+    if(led_status==0) 
+        {   
+            return;
+        }
 tim4_divider++;
 tim4_divider2++;
 tim4_divider3++;

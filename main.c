@@ -13,17 +13,17 @@
 unsigned short tim4_divider = 0;
 unsigned int tim4_divider2 = 0;
 unsigned int tim4_divider3 = 0;
-volatile unsigned long tim4_divider4 = 0;
-
+unsigned int tim4_divider4 = 0;
 unsigned char led_status = 1;
-//unsigned char zliczanie=0;
+unsigned char zliczanie=0;
 volatile unsigned char zliczanie3=0;
-volatile unsigned long dzielnik = 1;
 
 void delay( char ms)
 {
     int i=0;
-    for (i=0; i<(ms*100);i++);
+    for (i=0; i<(ms*100);i++)
+    {
+    }
 }
 void main()
 {   
@@ -47,16 +47,13 @@ void main()
 	PE_CR2 &= ~(1<<D4);
 	
 	// S1
-	PB_DDR &= ~(1<<S1);	
+	PB_DDR &= ~(1<<S1);
+	PB_CR1 &= ~(1<<S1);
 	PB_CR2 &= ~(1<<S1);
-    // S2
-	PB_DDR &= ~(1<<S2);
-	PB_CR2 &= ~(1<<S2);
     // S3
 	PB_DDR &= ~(1<<S3);
+	PB_CR1 &= ~(1<<S3);
 	PB_CR2 &= ~(1<<S3);
-    
-    PB_CR1 |= ((1<<S1) | (1<<S2) | (1<<S3)); 
 	
     
     // TIM4
@@ -72,26 +69,20 @@ while (1)
     {
             for(volatile long d=0; d<10000; d++); // delay
             if ((PB_IDR & (1 << S1)) == 0) 
-            {
-                if (dzielnik >= 3) dzielnik /= 3; 
+                if(led_status == 1)
+                {
+                    led_status = 0; 
+                }
+                else 
+                {
+                    led_status = 1; 
+                }
                 while((PB_IDR & (1 << S1)) == 0)
                 {
                     delay(10);
                 }
-            }
     }
-    if ((PB_IDR & (1<<S2)) == 0) 
-    {
-            for(volatile long d=0; d<10000; d++);
-            if ((PB_IDR & (1<<S2)) == 0) 
-            {
-                if (dzielnik < 30000) dzielnik *= 3; 
-                while ((PB_IDR & (1<<S2)) == 0)
-                {
-                delay(10);
-                }
-            }
-        }
+    
    if ((PB_IDR & (1<<S3)) == 0) 
     {
         for(volatile long d = 0; d < 10000; d++); // delay
@@ -120,30 +111,33 @@ while (1)
 void foo(void) __interrupt(23)
 {
     TIM4_SR &= ~(1 << 0);
-
+    if(led_status==0) 
+        {   
+            return;
+        }
 tim4_divider++;
 tim4_divider2++;
 tim4_divider3++;
 tim4_divider4++;
 
-if (tim4_divider >= (2*dzielnik))
+if (tim4_divider >= 2)
 {
 tim4_divider = 0;
 PC_ODR ^= (1 << D1);
 }
 
-if (tim4_divider2 >= (222*dzielnik))
+if (tim4_divider2 >= 222)
 {
 tim4_divider2 = 0;
 PC_ODR ^= (1 << D2);
 }
 
-if (tim4_divider3 >= (444*dzielnik))
+if (tim4_divider3 >= 444)
 {
 tim4_divider3 = 0;
 PC_ODR ^= (1 << D3);
 }
-if (tim4_divider4 >= (2000*dzielnik))
+if (tim4_divider4 >= 2000)
 {
 tim4_divider4 = 0;
 PE_ODR ^= (1 << D4);

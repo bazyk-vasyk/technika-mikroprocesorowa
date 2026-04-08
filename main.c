@@ -78,7 +78,6 @@ while (1)
                     led_status = 1; 
                 }
                 
-                // Czekaj na puszczenie przycisku S1
                 while((PB_IDR & (1 << S1)) == 0)
                 {
                     delay(10);
